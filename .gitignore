@@ -1,0 +1,39 @@
+#🛑Ignorowanie plików GNS3
+*.gns3project
+*gns3
+project-files/
+snapshots/
+vpcs_config.txt
+vpcs_history.txt
+nvram
+configs/
+__pycahce__/
+*.backup
+
+#🛑 Ingorowanie plików VMware
+*.vmx
+*.vmdk
+*.nvram
+*.log
+*.vmxf
+*.vmsd
+*.vmss
+*.vmtm
+*.ymem
+
+#🛑 Ignorowanie plików macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+#🛑 Ignorowanie plików Windows
+Thumbs.db
+desktop.ini
+
+#🛑Ignorowanie plików systemowych i tymczasowych
+*.tmp
+*.swap
+*.bak
+*.log
+*.lock
+*.cache
