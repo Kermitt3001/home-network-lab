@@ -2,6 +2,8 @@
 
 This repository documents the setup of a **GNS3 server** on Ubuntu, including **Docker** and **QEMU** for running network simulations. The setup is performed on **MacOS** with a virtual machine running Ubuntu Server.
 
+
+
 ## **📌 Table of Contents**
 
 - [1️⃣ System Preparation](#1️⃣-system-preparation)
@@ -10,7 +12,8 @@ This repository documents the setup of a **GNS3 server** on Ubuntu, including **
 - [4️⃣ Configuring Docker](#4️⃣-configuring-docker)
 - [5️⃣ Connecting GNS3 GUI](#5️⃣-connecting-gns3-gui)
 - [6️⃣ Running OpenWRT on GNS3](#6️⃣-running-openwrt-on-gns3)
-- [7️⃣ Troubleshooting](#7️⃣-troubleshooting)
+- [7️⃣ Configuring SSH Key Authentication](#7️⃣-configuring-ssh-key-authentication)
+- [8️⃣ Troubleshooting](#8️⃣-troubleshooting)
 
 ---
 
@@ -173,7 +176,69 @@ OpenWRT has been successfully installed on the GNS3 server. The installation was
 
 ---
 
-## **7️⃣ Troubleshooting**
+## **7️⃣ Configuring SSH Key Authentication**
+
+To enable passwordless login to the GNS3 server, generate an SSH key and configure authentication.
+
+### **Generate an SSH Key on MacOS**
+
+```sh
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -C "your_email@example.com"
+```
+- **`-t rsa -b 4096`** → Generates a **RSA 4096-bit key** (secure).
+- **`-f ~/.ssh/id_rsa`** → Specifies the key location.
+- **`-C "your_email@example.com"`** → Adds a comment (optional).
+
+📌 When prompted for a passphrase, press **Enter** to leave it empty (for automatic login).
+
+### **Copy the Public Key to the Server**
+
+Use `ssh-copy-id` to transfer the key to the GNS3 server:
+
+```sh
+ssh-copy-id kermitt@192.168.20.22
+```
+
+If `ssh-copy-id` is unavailable, manually append the key:
+
+```sh
+cat ~/.ssh/id_rsa.pub | ssh kermitt@192.168.20.22 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+```
+
+### **Test SSH Login Without Password**
+
+Now you should be able to log in without entering a password:
+
+```sh
+ssh kermitt@192.168.20.22
+```
+
+If successful, SSH authentication is correctly configured! 🎉
+
+### **Optional: Configure SSH for Easy Access**
+
+To avoid typing the full SSH command each time, configure an alias in **~/.ssh/config**:
+
+```sh
+nano ~/.ssh/config
+```
+Add the following:
+
+```
+Host HomeLab
+    HostName 192.168.20.22
+    User kermitt
+    IdentityFile ~/.ssh/id_rsa
+```
+
+Now you can simply type:
+
+```sh
+ssh HomeLab
+```
+---
+
+## **8️⃣  Troubleshooting**
 
 ### **Can't Connect to Server in GUI**
 
