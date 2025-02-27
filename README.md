@@ -1,8 +1,3 @@
-# home-network-lab
-This project documents the setup of a secure home network with devices like smartphones, a computer, a PlayStation, and a NAS. It includes network design, VLANs, firewalls, monitoring, and GitHub documentation for version control and future reference.
-
-
-
 # **GNS3 Server Setup on Ubuntu with Docker & QEMU**
 
 This repository documents the setup of a **GNS3 server** on Ubuntu, including **Docker** and **QEMU** for running network simulations. The setup is performed on **MacOS** with a virtual machine running Ubuntu Server.
@@ -14,7 +9,8 @@ This repository documents the setup of a **GNS3 server** on Ubuntu, including **
 - [3️⃣ Setting Up QEMU for Mikrotik](#3️⃣-setting-up-qemu-for-mikrotik)
 - [4️⃣ Configuring Docker](#4️⃣-configuring-docker)
 - [5️⃣ Connecting GNS3 GUI](#5️⃣-connecting-gns3-gui)
-- [6️⃣ Troubleshooting](#6️⃣-troubleshooting)
+- [6️⃣ Running OpenWRT on GNS3](#6️⃣-running-openwrt-on-gns3)
+- [7️⃣ Troubleshooting](#7️⃣-troubleshooting)
 
 ---
 
@@ -94,12 +90,6 @@ Verify it's running:
 ps aux | grep gns3
 ```
 
-Additionally, during setup in the GNS3 GUI, a notification prompted for the installation of **Dynamips**. This was installed using:
-
-```sh
-sudo apt install -y dynamips
-```
-
 ---
 
 ## **3️⃣ Setting Up QEMU for Mikrotik**
@@ -177,7 +167,13 @@ docker logs gns3server
 
 ---
 
-## **6️⃣ Troubleshooting**
+## **6️⃣ Running OpenWRT on GNS3**
+
+OpenWRT has been successfully installed on the GNS3 server. The installation was performed by downloading the OpenWRT image and the GNS3 appliance file on **MacOS**, followed by adding it to GNS3 using **New Appliance**.
+
+---
+
+## **7️⃣ Troubleshooting**
 
 ### **Can't Connect to Server in GUI**
 
