@@ -11,7 +11,7 @@ This repository documents the setup of a **GNS3 server** on Ubuntu, including **
 - [3️⃣ Setting Up QEMU for Mikrotik](#3️⃣-setting-up-qemu-for-mikrotik)
 - [4️⃣ Configuring Docker](#4️⃣-configuring-docker)
 - [5️⃣ Connecting GNS3 GUI](#5️⃣-connecting-gns3-gui)
-- [6️⃣ Running OpenWRT on GNS3](#6️⃣-running-openwrt-on-gns3)
+- [6️⃣ VLAN Configuration on Mikrotik](#6️⃣-vlan-configuration-on-mikrotik)
 - [7️⃣ Configuring SSH Key Authentication](#7️⃣-configuring-ssh-key-authentication)
 - [8️⃣ Troubleshooting](#8️⃣-troubleshooting)
 
@@ -170,9 +170,39 @@ docker logs gns3server
 
 ---
 
-## **6️⃣ Running OpenWRT on GNS3**
+## **6️⃣ VLAN Configuration on Mikrotik**
 
-OpenWRT has been successfully installed on the GNS3 server. The installation was performed by downloading the OpenWRT image and the GNS3 appliance file on **MacOS**, followed by adding it to GNS3 using **New Appliance**.
+This section describes how to configure VLANs on a **Mikrotik router** inside GNS3.
+
+### **VLAN Structure**
+- **VLAN 10 - Home Network** (NAS, computers, phones)
+- **VLAN 20 - Hidden Devices** (PlayStation, Printer)
+- **VLAN 30 - Guest Network** (up to 10 devices, firewall restrictions)
+
+### **Configure VLANs on Mikrotik**
+
+```sh
+/interface vlan
+add name=vlan10-home vlan-id=10 interface=bridge-vlans
+add name=vlan20-hidden vlan-id=20 interface=bridge-vlans
+add name=vlan30-guest vlan-id=30 interface=bridge-vlans
+```
+
+### **Assign VLANs to Ports**
+
+```sh
+/interface bridge port
+add bridge=bridge-vlans interface=ether1 pvid=10
+add bridge=bridge-vlans interface=ether2
+add bridge=bridge-vlans interface=ether3 pvid=20
+```
+
+### **Verify VLAN Configuration**
+
+```sh
+/interface bridge vlan print
+/interface bridge port print
+```
 
 ---
 
@@ -276,7 +306,37 @@ Ensure `dynamips` is installed:
 sudo apt install -y dynamips
 ```
 
+### **Checking VLANs on Mikrotik**
+
+To list VLANs:
+
+```sh
+/interface bridge vlan print
+```
+
+To check VLAN assignments:
+
+```sh
+/interface bridge port print
+```
+
+To view connected devices' MAC addresses:
+
+```sh
+/interface bridge host print
+```
+
+### **VLAN Filtering Issue**
+
+If VLANs are not working correctly, ensure that `vlan-filtering=yes` is enabled on the bridge:
+
+```sh
+/interface bridge set bridge-vlans vlan-filtering=yes
+```
+
+Without this setting, VLANs may not function as expected in newer versions of RouterOS.
+
 ---
 
-This documentation will be expanded as needed. **Contributions welcome!** 🚀
+This documentation will be expanded as needed. **Contributions welcome!**
 
