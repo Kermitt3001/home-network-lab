@@ -1,0 +1,10 @@
+Mar 11 09:05:43.218 HYPERVISOR: Release 0.2.23-nojit/Linux (tag 2023010200)
+Mar 11 09:05:43.218 HYPERVISOR: Started on IP = 127.0.0.1, TCP port = 57467.
+Mar 11 09:05:43.225 HYPERVISOR: exec_cmd: hypervisor version 
+Mar 11 09:05:43.225 HYPERVISOR: exec_cmd: hypervisor working_dir /home/kermitt/GNS3/projects/a0e2d8b9-fa96-45f3-8e19-36b9f7f5ffbc/project-files/dynamips 
+Mar 11 09:05:43.225 GENERAL: working_dir=/home/kermitt/GNS3/projects/a0e2d8b9-fa96-45f3-8e19-36b9f7f5ffbc/project-files/dynamips
+Mar 11 09:05:43.225 HYPERVISOR: exec_cmd: nio_bridge create Hub1 
+Mar 11 09:05:48.624 HYPERVISOR: exec_cmd: nio_bridge delete Hub1 
+Mar 11 09:05:48.624 HYPERVISOR: exec_cmd: hypervisor stop 
+Mar 11 09:05:48.731 HYPERVISOR: Stopped.
+Mar 11 09:05:48.731 GENERAL: reset done.
