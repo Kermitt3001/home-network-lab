@@ -1,5 +1,5 @@
 #🛑Ignorowanie plików GNS3
-*project-files/
+project-files/
 snapshots/
 vpcs_config.txt
 vpcs_history.txt
