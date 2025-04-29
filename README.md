@@ -170,38 +170,223 @@ docker logs gns3server
 
 ---
 
-## **6️⃣ VLAN Configuration on Mikrotik**
+## **6️⃣ MikroTik Configuration**
 
-This section describes how to configure VLANs on a **Mikrotik router** inside GNS3.
+Below is the complete configuration of a MikroTik C52iG-5HaxD2HaxD router (RouterOS 7.18.2), with MAC addresses anonymized as `AA:AA:AA:AA:AA:AA`. Each section is numbered and explained in detail.
 
-### **VLAN Structure**
-- **VLAN 10 - Home Network** (NAS, computers, phones)
-- **VLAN 20 - Hidden Devices** (PlayStation, Printer)
-- **VLAN 30 - Guest Network** (up to 10 devices, firewall restrictions)
+### 6.1 Basic Setup – Identity, Time, and Updates
+```rsc
+/system identity set name=hAP-ax2-Secure
+/system clock set time-zone-name=XYZ
+/system package update install
+/system routerboard upgrade
+```
+- **Set device name** to `hAP-ax2-Secure` for easy identification.
+- **Configure timezone** for accurate logs (`XYZ`).
+- **Install system updates** and **upgrade firmware** on the routerboard.
 
-### **Configure VLANs on Mikrotik**
+### 6.2 Bridge and VLAN Interface Configuration
+```rsc
+/interface bridge
+add name=bridge-main vlan-filtering=yes
 
-```sh
 /interface vlan
-add name=vlan10-home vlan-id=10 interface=bridge-vlans
-add name=vlan20-hidden vlan-id=20 interface=bridge-vlans
-add name=vlan30-guest vlan-id=30 interface=bridge-vlans
+add interface=bridge-main name=vlan10-HOME vlan-id=10
+add interface=bridge-main name=vlan20-OT vlan-id=20
+add interface=bridge-main name=vlan30-GUEST vlan-id=30
 ```
+- **Create** a `bridge-main` with **VLAN filtering** enabled.
+- **Define** three VLANs on that bridge:
+  - VLAN 10: Home network
+  - VLAN 20: OT (IoT) devices
+  - VLAN 30: Guest network
 
-### **Assign VLANs to Ports**
+### 6.3 Wi‑Fi Datapath and SSID Configuration
+```rsc
+/interface wifi datapath
+add bridge=bridge-main disabled=no name=dp-HOME vlan-id=10
+add bridge=bridge-main disabled=no name=dp-OT vlan-id=20
+add bridge=bridge-main disabled=no name=dp-GUEST vlan-id=30
+```
+- **Map** each VLAN to a dedicated Wi‑Fi datapath.
 
-```sh
+```rsc
+/interface wifi security
+add name=WPA3-HOME authentication-types=wpa3-psk encryption=ccmp,gcmp
+add name=WPA3-IoT authentication-types=wpa2-psk,wpa3-psk encryption=ccmp,gcmp
+add name=WPA2-GUEST authentication-types=wpa2-psk encryption=ccmp
+```
+- **Define** three Wi‑Fi security profiles for respective SSIDs.
+
+```rsc
+/interface wifi configuration
+add name=Home-WIFI disabled=no ssid="YOUR_NAME" security=WPA3-HOME
+add name=Home_OT disabled=no ssid="YOUR_NAME" security=WPA3-IoT
+add name=Guest-WIFI disabled=no ssid="YOUR_NAME" security=WPA2-GUEST
+```
+- **Create** SSIDs bound to these profiles.
+
+```rsc
+/interface wifi
+set [find default-name=wifi1] mode=ap channel.band=5ghz-ax skip-dfs-channels=all configuration=Home-WIFI datapath=dp-HOME disabled=no
+set [find default-name=wifi2] mode=ap channel.band=2ghz-ax skip-dfs-channels=all configuration=Home_OT datapath=dp-OT disabled=no
+add name=wifi3 mode=ap master-interface=wifi1 mac-address=AA:AA:AA:AA:AA:AA configuration=Guest-WIFI datapath=dp-GUEST disabled=no
+```
+- **Assign** physical and virtual AP interfaces.
+
+### 6.4 IP Pools and DHCP Servers
+```rsc
+/ip pool
+add name=dhcp-home ranges=192.168.10.100-192.168.10.200
+add name=dhcp-iot ranges=192.168.20.100-192.168.20.200
+add name=dhcp-guest ranges=192.168.30.100-192.168.30.200
+
+/ip dhcp-server
+add name=dhcp-home interface=vlan10-HOME address-pool=dhcp-home lease-time=12h30m
+add name=dhcp-ot interface=vlan20-OT address-pool=dhcp-iot lease-time=1d30m
+add name=dhcp-guest interface=vlan30-GUEST address-pool=dhcp-guest lease-time=1h30m
+
+/ip dhcp-server network
+add address=192.168.10.0/24 gateway=192.168.10.1 dns-server=192.168.10.1
+add address=192.168.20.0/24 gateway=192.168.20.1 dns-server=192.168.20.1
+add address=192.168.30.0/24 gateway=192.168.30.1 dns-server=192.168.30.1
+```
+- **Define** DHCP pools and **enable** servers per VLAN.
+
+### 6.5 Interface Lists
+```rsc
+/interface list
+add name=WAN
+add name=LAN
+
+/interface list member
+add interface=ether1 list=WAN
+add interface=bridge-main list=LAN
+```
+- **Group** interfaces for firewall/NAT rule targeting.
+
+### 6.6 Bridge Ports and VLAN Memberships
+```rsc
 /interface bridge port
-add bridge=bridge-vlans interface=ether1 pvid=10
-add bridge=bridge-vlans interface=ether2
-add bridge=bridge-vlans interface=ether3 pvid=20
+add bridge=bridge-main interface=ether2 frame-types=admit-only-untagged-and-priority-tagged pvid=10
+add bridge=bridge-main interface=ether3 frame-types=admit-only-untagged-and-priority-tagged pvid=20
+add bridge=bridge-main interface=ether4 frame-types=admit-only-untagged-and-priority-tagged pvid=30
+add bridge=bridge-main interface=ether5 frame-types=admit-only-untagged-and-priority-tagged pvid=10
+
+/interface bridge vlan
+add bridge=bridge-main tagged=bridge-main,wifi1 vlan-ids=10 untagged=ether2,ether5
+add bridge=bridge-main tagged=bridge-main,wifi2 vlan-ids=20 untagged=ether3
+add bridge=bridge-main tagged=bridge-main,wifi1 vlan-ids=30 untagged=ether4
 ```
+- **Assign** ports and Wi‑Fi interfaces to VLANs.
 
-### **Verify VLAN Configuration**
+### 6.7 IP Addresses and WAN DHCP Client
+```rsc
+/ip address
+add address=192.168.10.1/24 interface=vlan10-HOME
+add address=192.168.20.1/24 interface=vlan20-OT
+add address=192.168.30.1/24 interface=vlan30-GUEST
 
-```sh
-/interface bridge vlan print
-/interface bridge port print
+/ip dhcp-client
+add interface=ether1 use-peer-ntp=no
+```
+- **Set** router IPs and enable WAN DHCP.
+
+### 6.8 DNS Configuration
+```rsc
+/ip dns
+set servers=1.1.1.1,1.0.0.1,1.1.1.2,9.9.9.9 allow-remote-requests=yes
+```
+- **Use** public DNS resolvers and **serve** LAN.
+
+### 6.9 Firewall Filter Rules
+```rsc
+/ip firewall filter
+# Drop DNS from WAN
+add chain=input protocol=udp dst-port=53 in-interface-list=WAN action=drop comment="Drop DNS UDP from WAN"
+add chain=input protocol=tcp dst-port=53 in-interface-list=WAN action=drop comment="Drop DNS TCP from WAN"
+
+# Allow established/related and ICMP
+add chain=input connection-state=established,related action=accept comment="Allow established"
+add chain=input connection-state=invalid action=drop comment="Drop invalid"
+add chain=input protocol=icmp action=accept comment="Allow ICMP"
+
+# Block all other input
+add chain=input action=drop comment="Drop all other input"
+
+# Forwarding rules
+add chain=forward src-address=192.168.10.0/24 action=accept comment="Allow Home to anywhere"
+add chain=forward src-address=192.168.20.0/24 dst-address=192.168.10.0/24 action=drop comment="Block IoT→Home"
+add chain=forward src-address=192.168.30.0/24 dst-address=192.168.0.0/16 action=drop comment="Block Guest→LAN"
+
+# TCP anomaly protection
+add chain=forward protocol=tcp psd=21,3s,3,1 action=drop comment="Drop FTP port scanning"
+add chain=forward protocol=tcp tcp-flags=fin,!ack action=drop comment="Drop suspicious TCP"
+add chain=forward protocol=tcp tcp-flags=fin,syn,rst,ack action=drop comment="Drop XMAS scans"
+```
+- **Protect** and **segregate** VLAN traffic.
+
+### 6.10 Firewall NAT and Masquerading
+```rsc
+/ip firewall nat
+add chain=srcnat out-interface-list=WAN src-address=192.168.0.0/16 action=masquerade comment="Masquerade LAN to WAN"
+```
+- **Translate** LAN for Internet access.
+
+### 6.11 Firewall Mangle for PS4 Priority
+```rsc
+/ip firewall mangle
+add chain=prerouting dst-address=192.168.20.200 new-connection-mark=PS4_CONN comment="Mark PS4 connections"
+add chain=forward connection-mark=PS4_CONN new-packet-mark=PS4_TRAFFIC comment="Mark PS4 traffic"
+```
+- **Tag** PS4 traffic for QoS.
+
+### 6.12 Queues – Bandwidth Management
+```rsc
+/queue simple
+add name="Guest-Limit" target=vlan30-GUEST max-limit=10M/10M comment="Limit guest bandwidth"
+
+/queue tree
+add name="PS4-Priority" parent=global packet-mark=PS4_TRAFFIC priority=1
+add name="Default-QoS" parent=global packet-mark=all
+```
+- **Limit** guest VLAN and **prioritize** PS4.
+
+### 6.13 Firewall Service-Port and Management
+```rsc
+/ip firewall service-port
+set ftp disabled=yes
+set tftp disabled=yes
+set h323 disabled=yes
+set sip disabled=yes
+
+/ip service
+set telnet disabled=yes
+set ftp disabled=yes
+set www disabled=yes
+set api disabled=yes
+set ssh address=192.168.10.0/24
+set winbox address=192.168.10.0/24
+```
+- **Disable** unused services and **restrict** management to Home VLAN.
+
+### 6.14 Logging and System Notes
+```rsc
+/system logging action
+set 1 disk-lines-per-file=10000
+/system logging
+add action=disk topics=firewall,info
+/system note set show-at-login=no
+```
+- **Configure** disk logging and **suppress** login note.
+
+### 6.15 Packet Sniffer
+```rsc
+/tool sniffer set file-name=client196.pcap filter-interface=bridge-main filter-ip-address=192.168.10.196/32 filter-mac-address=AA:AA:AA:AA:AA:AA/FF:FF:FF:FF:FF:FF
+```
+- **Capture** traffic for analysis.
+
+
 ```
 
 ---
