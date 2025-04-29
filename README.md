@@ -11,7 +11,7 @@ This repository documents the setup of a **GNS3 server** on Ubuntu, including **
 - [3️⃣ Setting Up QEMU for Mikrotik](#3️⃣-setting-up-qemu-for-mikrotik)
 - [4️⃣ Configuring Docker](#4️⃣-configuring-docker)
 - [5️⃣ Connecting GNS3 GUI](#5️⃣-connecting-gns3-gui)
-- [6️⃣ VLAN Configuration on Mikrotik](#6️⃣-vlan-configuration-on-mikrotik)
+- [6️⃣ MikroTik Configuration](#6️⃣-mikrotik-configuration)
 - [7️⃣ Configuring SSH Key Authentication](#7️⃣-configuring-ssh-key-authentication)
 - [8️⃣ Troubleshooting](#8️⃣-troubleshooting)
 
